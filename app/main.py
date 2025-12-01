@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 from typing import Callable, Optional
 
-SHELL_BUILTIN: frozenset[str] = frozenset(("type", "echo", "exit", "pwd"))
+SHELL_BUILTIN: frozenset[str] = frozenset(("type", "echo", "exit", "pwd", "cd"))
 PATH = os.environ.get("PATH", "")
 
 
@@ -48,6 +48,13 @@ def do_pwd() -> None:
     sys.stdout.write(f"{os.getcwd()}\n")
 
 
+def do_cd(data: list[str]) -> None:
+    try:
+        os.chdir(data[1])
+    except FileNotFoundError:
+        sys.stdout.write(f"cd: {data[1]}: No such file or directory\n")
+
+
 def main() -> None:
     while True:
         sys.stdout.write("$ ")
@@ -61,6 +68,8 @@ def main() -> None:
             do_type(user_input)
         elif user_input[0] == "pwd":
             do_pwd()
+        elif user_input[0] == "cd":
+            do_cd(user_input)
         else:
             file_name = find_file(user_input[0], filter=is_executable)
             if file_name is None:
