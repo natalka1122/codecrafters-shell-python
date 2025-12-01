@@ -63,18 +63,26 @@ def split(line: str) -> list[str]:
     inside_single_quote = False
     inside_double_quote = False
     escape_next_symbol = False
-    for symbol in line:
+    for index, symbol in enumerate(line):
         if inside_single_quote:
             if symbol == "'":
                 inside_single_quote = False
                 continue
             use_symbol = symbol
         elif inside_double_quote:
-            if symbol == '"':
+            if escape_next_symbol:
+                escape_next_symbol = False
+                use_symbol = symbol
+            elif symbol == '"':
                 inside_double_quote = False
                 continue
             elif symbol == "~":
                 use_symbol = HOME
+            elif symbol == "\\":
+                if len(line) > index + 1 and line[index + 1] in ['"', "\\", "$", "`", "\n"]:
+                    escape_next_symbol = True
+                    continue
+                use_symbol = symbol
             else:
                 use_symbol = symbol
         else:
