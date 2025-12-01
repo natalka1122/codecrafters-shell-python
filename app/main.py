@@ -59,27 +59,46 @@ def do_cd(data: list[str]) -> None:
 
 def split(line: str) -> list[str]:
     result: list[str] = []
-    current_item = ""
+    add_new_item = True
     inside_single_quote = False
-
+    inside_double_quote = False
     for symbol in line:
-        if symbol == "'":
-            inside_single_quote = not inside_single_quote
-        elif inside_single_quote:
-            current_item += symbol
-        elif symbol == " ":
-            if current_item:
-                result.append(current_item)
-                current_item = ""
-        elif symbol == "$":
-            raise NotImplementedError
-        elif symbol == "~":
-            current_item += HOME
+        if inside_single_quote:
+            if symbol == "'":
+                inside_single_quote = False
+                continue
+            use_symbol = symbol
+        elif inside_double_quote:
+            if symbol == '"':
+                inside_double_quote = False
+                continue
+            elif symbol == "$":
+                raise NotImplementedError
+            elif symbol == "~":
+                use_symbol = HOME
+            else:
+                use_symbol = symbol
         else:
-            current_item += symbol
-
-    if current_item:
-        result.append(current_item)
+            if symbol == "'":
+                inside_single_quote = True
+                continue
+            elif symbol == '"':
+                inside_double_quote = True
+                continue
+            elif symbol == " ":
+                add_new_item = True
+                continue
+            elif symbol == "$":
+                raise NotImplementedError
+            elif symbol == "~":
+                use_symbol = HOME
+            else:
+                use_symbol = symbol
+        if add_new_item:
+            result.append(use_symbol)
+            add_new_item = False
+        else:
+            result[-1] += use_symbol
     return result
 
 
