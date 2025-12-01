@@ -62,6 +62,7 @@ def split(line: str) -> list[str]:
     add_new_item = True
     inside_single_quote = False
     inside_double_quote = False
+    escape_next_symbol = False
     for symbol in line:
         if inside_single_quote:
             if symbol == "'":
@@ -72,14 +73,15 @@ def split(line: str) -> list[str]:
             if symbol == '"':
                 inside_double_quote = False
                 continue
-            elif symbol == "$":
-                raise NotImplementedError
             elif symbol == "~":
                 use_symbol = HOME
             else:
                 use_symbol = symbol
         else:
-            if symbol == "'":
+            if escape_next_symbol:
+                escape_next_symbol = False
+                use_symbol = symbol
+            elif symbol == "'":
                 inside_single_quote = True
                 continue
             elif symbol == '"':
@@ -88,10 +90,11 @@ def split(line: str) -> list[str]:
             elif symbol == " ":
                 add_new_item = True
                 continue
-            elif symbol == "$":
-                raise NotImplementedError
             elif symbol == "~":
                 use_symbol = HOME
+            elif symbol == "\\":
+                escape_next_symbol = True
+                continue
             else:
                 use_symbol = symbol
         if add_new_item:
