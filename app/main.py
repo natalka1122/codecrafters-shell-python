@@ -44,6 +44,10 @@ def do_run_file(data: list[str]) -> None:
     subprocess.run(data)
 
 
+def do_pwd() -> None:
+    sys.stdout.write(f"{os.getcwd()}\n")
+
+
 def main() -> None:
     while True:
         sys.stdout.write("$ ")
@@ -55,6 +59,8 @@ def main() -> None:
             do_echo(user_input)
         elif user_input[0] == "type":
             do_type(user_input)
+        elif user_input[0] == "pwd":
+            do_pwd()
         else:
             file_name = find_file(user_input[0], filter=is_executable)
             if file_name is None:
