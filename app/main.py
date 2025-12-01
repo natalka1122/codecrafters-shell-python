@@ -6,6 +6,7 @@ from typing import Callable, Optional
 
 SHELL_BUILTIN: frozenset[str] = frozenset(("type", "echo", "exit", "pwd", "cd"))
 PATH = os.environ.get("PATH", "")
+HOME = os.getenv("HOME", "")
 
 
 def is_executable(x: Path) -> bool:
@@ -49,10 +50,11 @@ def do_pwd() -> None:
 
 
 def do_cd(data: list[str]) -> None:
+    new_dir = data[1].replace("~", HOME)
     try:
-        os.chdir(data[1])
+        os.chdir(new_dir)
     except FileNotFoundError:
-        sys.stdout.write(f"cd: {data[1]}: No such file or directory\n")
+        sys.stdout.write(f"cd: {new_dir}: No such file or directory\n")
 
 
 def main() -> None:
