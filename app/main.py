@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 from typing import Callable, Optional
 
-SHELL_BUILTIN = ["type", "echo", "exit"]
+SHELL_BUILTIN: frozenset[str] = frozenset(("type", "echo", "exit", "pwd"))
 PATH = os.environ.get("PATH", "")
 
 
