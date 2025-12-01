@@ -57,11 +57,37 @@ def do_cd(data: list[str]) -> None:
         sys.stdout.write(f"cd: {new_dir}: No such file or directory\n")
 
 
+def split(line: str) -> list[str]:
+    result: list[str] = []
+    current_item = ""
+    inside_single_quote = False
+
+    for symbol in line:
+        if symbol == "'":
+            inside_single_quote = not inside_single_quote
+        elif inside_single_quote:
+            current_item += symbol
+        elif symbol == " ":
+            if current_item:
+                result.append(current_item)
+                current_item = ""
+        elif symbol == "$":
+            raise NotImplementedError
+        elif symbol == "~":
+            current_item += HOME
+        else:
+            current_item += symbol
+
+    if current_item:
+        result.append(current_item)
+    return result
+
+
 def main() -> None:
     while True:
         sys.stdout.write("$ ")
-        user_input_str = input()
-        user_input = user_input_str.split(" ")
+        line = input().strip()
+        user_input = split(line)
         if user_input[0] == "exit":
             break
         if user_input[0] == "echo":
