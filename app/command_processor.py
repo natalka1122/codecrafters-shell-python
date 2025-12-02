@@ -17,6 +17,20 @@ ArgsHandler = Callable[[Command], CommandResult]
 PATH = os.getenv("PATH", "")
 
 
+class AppendHistory:
+    def __init__(self) -> None:
+        self.processed = 0
+
+    def __call__(self, filename: str) -> CommandResult:
+        current_length = readline.get_current_history_length()
+        readline.append_history_file(current_length - self.processed, filename)
+        self.processed = readline.get_current_history_length()
+        return [], []
+
+
+append_history = AppendHistory()
+
+
 def find_executable_file(file_name: str) -> Optional[Path]:
     for path_dir in PATH.split(os.pathsep):
         file_path = Path(path_dir) / file_name
@@ -73,11 +87,6 @@ def read_history(filename: str) -> CommandResult:
 
 def write_history(filename: str) -> CommandResult:
     readline.write_history_file(filename)
-    return [], []
-
-
-def append_history(filename: str) -> CommandResult:
-    readline.append_history_file(readline.get_current_history_length(), filename)
     return [], []
 
 
