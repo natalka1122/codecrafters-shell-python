@@ -132,6 +132,7 @@ class Command:
             self.tokens.append(token)
         self.cmd_type = self.tokens[0]
         self.args = self.tokens[1:]
+        self.text = " ".join(self.tokens)
 
     def __getitem__(self, index: int) -> str:
         return self.tokens[index]
