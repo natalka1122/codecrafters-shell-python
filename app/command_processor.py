@@ -66,7 +66,33 @@ def do_pwd(command: Command) -> CommandResult:
     return [os.getcwd()], []
 
 
+def read_history(filename: str) -> CommandResult:
+    with open(filename, "r") as file:
+        for line_dirty in file:
+            line = line_dirty.strip()
+            if line:
+                readline.add_history(line)
+    return [], []
+
+
+def write_history(filename: str) -> CommandResult:
+    return [], ["write_history: NotImplementedError"]
+
+
+def append_history(filename: str) -> CommandResult:
+    return [], ["append_history: NotImplementedError"]
+
+
 def do_history(command: Command) -> CommandResult:
+    if len(command.args) == 2:
+        if command.args[0] == "-r":
+            return read_history(command.args[1])
+        if command.args[0] == "-w":
+            return write_history(command.args[1])
+        if command.args[0] == "-a":
+            return append_history(command.args[1])
+        return [], ["NotImplementedError"]
+
     result: list[str] = []
     length = readline.get_current_history_length()
     if len(command.args) > 0:
