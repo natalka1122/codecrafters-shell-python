@@ -67,20 +67,18 @@ def do_pwd(command: Command) -> CommandResult:
 
 
 def read_history(filename: str) -> CommandResult:
-    with open(filename, "r") as file:
-        for line_dirty in file:
-            line = line_dirty.strip()
-            if line:
-                readline.add_history(line)
+    readline.read_history_file(filename)
     return [], []
 
 
 def write_history(filename: str) -> CommandResult:
-    return [], ["write_history: NotImplementedError"]
+    readline.write_history_file(filename)
+    return [], []
 
 
 def append_history(filename: str) -> CommandResult:
-    return [], ["append_history: NotImplementedError"]
+    readline.append_history_file(readline.get_current_history_length(), filename)
+    return [], []
 
 
 def do_history(command: Command) -> CommandResult:
