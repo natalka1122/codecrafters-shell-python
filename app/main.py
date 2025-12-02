@@ -10,6 +10,7 @@ from app.command_processor import DEFAULT_HANDLERS, processor
 from app.exceptions import ExitError
 
 PATH = os.environ.get("PATH", "")
+HISTFILE = os.environ.get("HISTFILE", "")
 
 
 def write(line: str, is_stdout: bool, is_add: bool, filename: Optional[str]) -> None:
@@ -64,13 +65,15 @@ def completer(text: str, state: int) -> str | None:
 
 
 def main() -> None:
-
     readline.set_completer(completer)
     readline.parse_and_bind("tab: complete")
-    readline.parse_and_bind('set bell-style audible')
+    readline.parse_and_bind("set bell-style audible")
+    if HISTFILE:
+        processor(Command(f"history -r {HISTFILE}"))
+
     with suppress(KeyboardInterrupt, ExitError):
         while True:  # noqa: WPS457
-            line = input('$ ').strip()  # noqa: WPS421
+            line = input("$ ").strip()  # noqa: WPS421
             command = Command(line)
             stdout, stderr = processor(command)
             write_all(stdout_lines=stdout, stderr_lines=stderr, command=command)

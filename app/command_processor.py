@@ -1,6 +1,7 @@
 import os
 import readline
 import subprocess
+from contextlib import suppress
 from pathlib import Path
 from types import MappingProxyType
 from typing import Callable, Mapping, Optional
@@ -81,7 +82,8 @@ def do_pwd(command: Command) -> CommandResult:
 
 
 def read_history(filename: str) -> CommandResult:
-    readline.read_history_file(filename)
+    with suppress(OSError):
+        readline.read_history_file(filename)
     return [], []
 
 
