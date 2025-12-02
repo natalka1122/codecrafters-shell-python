@@ -1,4 +1,5 @@
 import os
+import readline
 import sys
 from contextlib import suppress
 from typing import Optional
@@ -43,7 +44,16 @@ def write_all(
         write(f"bash: {command.stderr_file}: Is a directory\n", True, False, None)
 
 
+def completer(text: str, state: int) -> str | None:
+    options = ["echo", "exit"]
+    matches = [f"{opt} " for opt in options if opt.startswith(text)]
+    return matches[state] if state < len(matches) else None
+
+
 def main() -> None:
+
+    readline.set_completer(completer)
+    readline.parse_and_bind("tab: complete")
     with suppress(KeyboardInterrupt, ExitError):
         while True:  # noqa: WPS457
             sys.stdout.write("$ ")
