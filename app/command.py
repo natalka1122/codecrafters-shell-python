@@ -93,8 +93,8 @@ class CommandParser:
 class Command:
     def __init__(self, line: str) -> None:
         tokens = CommandParser(line)
-        self.stdout: Optional[str] = None
-        self.stderr: Optional[str] = None
+        self.stdout_file: Optional[str] = None
+        self.stderr_file: Optional[str] = None
         self.stdout_add: bool = False
         self.stderr_add: bool = False
         self.tokens: list[str] = []
@@ -106,13 +106,27 @@ class Command:
             if token in [">", "1>"]:
                 if i >= len(tokens) - 1:
                     raise NotImplementedError
-                self.stdout = tokens[i + 1]
+                self.stdout_file = tokens[i + 1]
+                skip_next = True
+                continue
+            if token in [">>", "1>>"]:
+                if i >= len(tokens) - 1:
+                    raise NotImplementedError
+                self.stdout_file = tokens[i + 1]
+                self.stdout_add = True
                 skip_next = True
                 continue
             if token == "2>":
                 if i >= len(tokens) - 1:
                     raise NotImplementedError
-                self.stderr = tokens[i + 1]
+                self.stderr_file = tokens[i + 1]
+                skip_next = True
+                continue
+            if token == "2>>":
+                if i >= len(tokens) - 1:
+                    raise NotImplementedError
+                self.stderr_file = tokens[i + 1]
+                self.stderr_add = True
                 skip_next = True
                 continue
             self.tokens.append(token)
