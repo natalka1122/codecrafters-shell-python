@@ -69,7 +69,11 @@ def do_pwd(command: Command) -> CommandResult:
 def do_history(command: Command) -> CommandResult:
     result: list[str] = []
     length = readline.get_current_history_length()
-    for index in range(1, length):
+    if len(command.args) > 0:
+        start_index = max(0, length - int(command.args[0]))
+    else:
+        start_index = 0
+    for index in range(start_index + 1, length):
         result.append(f"    {index}  {readline.get_history_item(index)}")
     result.append(f"    {length}  {command.text}")
     return result, []
