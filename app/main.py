@@ -27,19 +27,19 @@ def write_all(
     stdout_file: Optional[str] = None,
     stderr_file: Optional[str] = None,
 ) -> None:
-    if stdout_lines:
-        stdout = "\n".join(stdout_lines)
-        try:
-            write(f"{stdout}\n", True, stdout_file)
-        except IsADirectoryError:
-            stderr_lines = [f"bash: {stdout_file}: Is a directory"]
-            stderr_file = None
-    if stderr_lines:
-        stderr = "\n".join(stderr_lines)
-        try:
-            write(f"{stderr}\n", True, stderr_file)
-        except IsADirectoryError:
-            write(f"bash: {stderr}: Is a directory\n", True, None)
+    stdout = "\n".join(stdout_lines)
+    stdout += "\n" if stdout else ""
+    try:
+        write(stdout, True, stdout_file)
+    except IsADirectoryError:
+        stderr_lines = [f"bash: {stdout_file}: Is a directory"]
+        stderr_file = None
+    stderr = "\n".join(stderr_lines)
+    stderr += "\n" if stderr else ""
+    try:
+        write(stderr, True, stderr_file)
+    except IsADirectoryError:
+        write(f"bash: {stderr}: Is a directory\n", True, None)
 
 
 def main() -> None:
