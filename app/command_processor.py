@@ -65,6 +65,9 @@ def do_pwd(command: Command) -> CommandResult:
     return [os.getcwd()], []
 
 
+def do_history(command: Command) -> CommandResult:
+    return ["NotImplementedError"], []
+
 def do_cd(command: Command) -> CommandResult:
     new_dir = command.args[0]
     try:
@@ -74,11 +77,13 @@ def do_cd(command: Command) -> CommandResult:
     return [], []
 
 
+
 DEFAULT_HANDLERS: Mapping[str, ArgsHandler] = MappingProxyType(
     {
         CommandType.CD: do_cd,
         CommandType.ECHO: do_echo,
         CommandType.EXIT: do_exit,
+        CommandType.HISTORY: do_history,
         CommandType.TYPE: do_type,
         CommandType.PWD: do_pwd,
     }
