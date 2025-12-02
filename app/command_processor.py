@@ -84,6 +84,7 @@ def do_pwd(command: Command) -> CommandResult:
 def read_history(filename: str) -> CommandResult:
     with suppress(OSError):
         readline.read_history_file(filename)
+    append_history.processed = readline.get_current_history_length()
     return [], []
 
 
