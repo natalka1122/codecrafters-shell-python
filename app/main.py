@@ -50,14 +50,16 @@ def completer(text: str, state: int) -> str | None:
         return shell_builtin[state]
 
     index = len(shell_builtin)
+    matches: list[str] = []
     for path_dir in PATH.split(os.pathsep):
-        matches = list(Path(path_dir).glob(f"{text}*"))
-        if state - index < len(matches):
-            result = matches[state - index].name
-            if len(matches) == 1:
-                return f"{result} "
-            else:
-                return str(result)
+        matches.extend(map(lambda x: x.name, Path(path_dir).glob(f"{text}*")))
+    matches.sort()
+    if state - index < len(matches):
+        result = matches[state - index]
+        if len(matches) == 1:
+            return f"{result} "
+        else:
+            return str(result)
     return None
 
 
@@ -65,10 +67,10 @@ def main() -> None:
 
     readline.set_completer(completer)
     readline.parse_and_bind("tab: complete")
+    readline.parse_and_bind('set bell-style audible')
     with suppress(KeyboardInterrupt, ExitError):
         while True:  # noqa: WPS457
-            sys.stdout.write("$ ")
-            line = input().strip()
+            line = input('$ ').strip()  # noqa: WPS421
             command = Command(line)
             stdout, stderr = processor(command)
             write_all(stdout_lines=stdout, stderr_lines=stderr, command=command)
