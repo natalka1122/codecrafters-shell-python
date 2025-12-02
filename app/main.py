@@ -2,13 +2,13 @@ import os
 import readline
 import sys
 from contextlib import suppress
+from pathlib import Path
 from typing import Optional
 
 from app.command import Command
-from app.command_processor import processor
+from app.command_processor import DEFAULT_HANDLERS, processor
 from app.exceptions import ExitError
 
-SHELL_BUILTIN: frozenset[str] = frozenset(("type", "echo", "exit", "pwd", "cd"))
 PATH = os.environ.get("PATH", "")
 
 
@@ -45,9 +45,20 @@ def write_all(
 
 
 def completer(text: str, state: int) -> str | None:
-    options = ["echo", "exit"]
-    matches = [f"{opt} " for opt in options if opt.startswith(text)]
-    return matches[state] if state < len(matches) else None
+    shell_builtin = [f"{opt} " for opt in DEFAULT_HANDLERS.keys() if opt.startswith(text)]
+    if state < len(shell_builtin):
+        return shell_builtin[state]
+
+    index = len(shell_builtin)
+    for path_dir in PATH.split(os.pathsep):
+        matches = list(Path(path_dir).glob(f"{text}*"))
+        if state - index < len(matches):
+            result = matches[state - index].name
+            if len(matches) == 1:
+                return f"{result} "
+            else:
+                return str(result)
+    return None
 
 
 def main() -> None:
