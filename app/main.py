@@ -78,6 +78,9 @@ def main() -> None:
             stdout, stderr = processor(command)
             write_all(stdout_lines=stdout, stderr_lines=stderr, command=command)
 
+    if HISTFILE:
+        processor(Command(f"history -a {HISTFILE}"))
+
 
 if __name__ == "__main__":
     main()
