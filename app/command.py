@@ -1,5 +1,8 @@
 import os
+import shlex
 from typing import Iterator, Optional
+
+from app.exceptions import EmptyCommandError
 
 SINGLE_QUOTE = "'"
 DOUBLE_QUOTE = '"'
@@ -9,6 +12,7 @@ BACKTICK = "`"
 DOLLAR_SIGN = "$"
 HOME_DIR = "~"
 SPACE = " "
+PIPE = "|"
 HOME = os.getenv("HOME", "")
 
 
@@ -90,9 +94,8 @@ class CommandParser:
         return symbol
 
 
-class Command:
-    def __init__(self, line: str) -> None:
-        tokens = CommandParser(line)
+class CommandOne:
+    def __init__(self, tokens: list[str]) -> None:
         self.stdout_file: Optional[str] = None
         self.stderr_file: Optional[str] = None
         self.stdout_add: bool = False
@@ -130,9 +133,32 @@ class Command:
                 skip_next = True
                 continue
             self.tokens.append(token)
+        if len(tokens) == 0:
+            raise EmptyCommandError
         self.cmd_type = self.tokens[0]
         self.args = self.tokens[1:]
-        self.text = " ".join(self.tokens)
+        self.text = " ".join(shlex.quote(arg) for arg in self.tokens)
 
     def __getitem__(self, index: int) -> str:
         return self.tokens[index]
+
+    def __repr__(self) -> str:
+        return str(self.tokens)
+
+
+class CommandFull:
+    def __init__(self, line: str) -> None:
+        self.commands: list[CommandOne] = []
+        tokens = CommandParser(line)
+        current_command: list[str] = []
+        for token in tokens:
+            if token == PIPE:
+                self.commands.append(CommandOne(current_command))
+                current_command = []
+                continue
+            current_command.append(token)
+        self.commands.append(CommandOne(current_command))
+        self.last_command = self.commands[-1]
+
+    def __repr__(self) -> str:
+        return str(self.commands)
