@@ -1,10 +1,12 @@
 import asyncio
 from abc import ABC, abstractmethod
+from contextlib import suppress
 from typing import Any, Coroutine, Optional
 
 from app.builtin import process_builtin
 from app.command import CommandFull, CommandOne
 from app.exceptions import NotBuildinError
+from app.service_functions import writeln
 from app.types import CommandResult, CommandResultAsyncIterator
 
 ProcessCoroutine = Coroutine[Any, Any, asyncio.subprocess.Process]
@@ -97,7 +99,8 @@ class ExecProcessBundle(ProcessBundle):
     async def write_stdin(self, line: bytes) -> None:
         if self.process.stdin:
             self.process.stdin.write(line)
-            await self.process.stdin.drain()
+            with suppress(ConnectionError):
+                await self.process.stdin.drain()
 
     async def close_stdin(self) -> None:
         if self.process.stdin:
@@ -112,16 +115,19 @@ class ProcessTaskGroup:
         self.stdout_to_pb: dict[asyncio.Task[bytes], ProcessBundle] = dict()
         self.stderr_to_pb: dict[asyncio.Task[bytes], ProcessBundle] = dict()
 
+    def __len__(self) -> int:
+        return len(self.int_to_pb)
+
     async def add_process(self, command: CommandOne) -> None:
         process_bundle = ProcessBundle.from_command(command)
         await process_bundle.activate()
         index = len(self.int_to_pb)
         self.pb_to_int[process_bundle] = index
-        self.int_to_pb.append(process_bundle)
         if process_bundle.stdout_task is not None:
             self.stdout_to_pb[process_bundle.stdout_task] = process_bundle
         if process_bundle.stderr_task is not None:
             self.stderr_to_pb[process_bundle.stderr_task] = process_bundle
+        self.int_to_pb.append(process_bundle)
 
     def get_readline_tasks(self) -> set[asyncio.Task[bytes]]:
         result: set[asyncio.Task[bytes]] = set()
@@ -148,14 +154,17 @@ class ProcessTaskGroup:
         else:
             self.stderr_to_pb[new_task] = bundle
         index: int = self.pb_to_int[bundle]
-        if index == len(self.int_to_pb) - 1:
+        if index == len(self) - 1:
             if is_stdout:
                 to_yield: CommandResult = result.decode(), None
             else:
                 to_yield = None, result.decode()
             return to_yield, new_task
-        next_bundle: ProcessBundle = self.int_to_pb[index + 1]
-        await next_bundle.write_stdin(result)
+        if is_stdout:
+            next_bundle: ProcessBundle = self.int_to_pb[index + 1]
+            await next_bundle.write_stdin(result)
+        else:
+            writeln(result.decode(), False, None)
         return None, new_task
 
     async def close_next_input(self, task: asyncio.Task[bytes]) -> None:
@@ -164,7 +173,7 @@ class ProcessTaskGroup:
             self.stderr_to_pb.pop(task, None)
             return
         index: int = self.pb_to_int[bundle]
-        if index == len(self.int_to_pb) - 1:
+        if index == len(self) - 1:
             return
         next_bundle: ProcessBundle = self.int_to_pb[index + 1]
         await next_bundle.close_stdin()
@@ -186,9 +195,10 @@ async def _process_done_task(
     return None
 
 
-async def process_full(command_full: CommandFull) -> CommandResultAsyncIterator:
+async def process_full(command_full: CommandFull) -> CommandResultAsyncIterator:  # noqa: WPS210
     task_group = ProcessTaskGroup()
-    await asyncio.gather(*[task_group.add_process(command) for command in command_full.commands])
+    for command in command_full.commands:
+        await task_group.add_process(command)  # noqa: WPS476
     readline_tasks: set[asyncio.Task[bytes]] = task_group.get_readline_tasks()
     while len(readline_tasks) > 0:
         done, readline_tasks = await asyncio.wait(

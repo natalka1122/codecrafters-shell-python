@@ -73,7 +73,7 @@ class CommandParser:
             return f"{prepend}{HOME}"
         return f"{prepend}{symbol}"
 
-    def _process_regular(self, symbol: str) -> Optional[str]:
+    def _process_regular(self, symbol: str) -> Optional[str]:  # noqa: WPS212
         if self.is_after_backslash:
             self.is_after_backslash = False
             return symbol
@@ -94,46 +94,20 @@ class CommandParser:
         return symbol
 
 
-class CommandOne:
-    def __init__(self, tokens: list[str]) -> None:
+class CommandOne:  # noqa: WPS230
+    def __init__(self, incoming_tokens: list[str]) -> None:
+        self.incoming_tokens = incoming_tokens
+        if len(self.incoming_tokens) == 0:
+            raise EmptyCommandError
         self.stdout_file: Optional[str] = None
         self.stderr_file: Optional[str] = None
         self.stdout_add: bool = False
         self.stderr_add: bool = False
         self.tokens: list[str] = []
-        skip_next = False
-        for i, token in enumerate(tokens):
-            if skip_next:
-                skip_next = False
-                continue
-            if token in [">", "1>"]:
-                if i >= len(tokens) - 1:
-                    raise NotImplementedError
-                self.stdout_file = tokens[i + 1]
-                skip_next = True
-                continue
-            if token in [">>", "1>>"]:
-                if i >= len(tokens) - 1:
-                    raise NotImplementedError
-                self.stdout_file = tokens[i + 1]
-                self.stdout_add = True
-                skip_next = True
-                continue
-            if token == "2>":
-                if i >= len(tokens) - 1:
-                    raise NotImplementedError
-                self.stderr_file = tokens[i + 1]
-                skip_next = True
-                continue
-            if token == "2>>":
-                if i >= len(tokens) - 1:
-                    raise NotImplementedError
-                self.stderr_file = tokens[i + 1]
-                self.stderr_add = True
-                skip_next = True
-                continue
-            self.tokens.append(token)
-        if len(tokens) == 0:
+        self.skip_next = False
+        for i, token in enumerate(self.incoming_tokens):
+            self._process_incoming_token(i, token)
+        if len(self.tokens) == 0:
             raise EmptyCommandError
         self.cmd_type = self.tokens[0]
         self.args = self.tokens[1:]
@@ -144,6 +118,30 @@ class CommandOne:
 
     def __repr__(self) -> str:
         return str(self.tokens)
+
+    def _process_incoming_token(self, i: int, token: str) -> None:
+        if self.skip_next:
+            self.skip_next = False
+            return
+        if token in [">", "1>"]:
+            self.stdout_file = self.incoming_tokens[i + 1]
+            self.skip_next = True
+            return
+        if token in [">>", "1>>"]:
+            self.stdout_file = self.incoming_tokens[i + 1]
+            self.stdout_add = True
+            self.skip_next = True
+            return
+        if token == "2>":
+            self.stderr_file = self.incoming_tokens[i + 1]
+            self.skip_next = True
+            return
+        if token == "2>>":
+            self.stderr_file = self.incoming_tokens[i + 1]
+            self.stderr_add = True
+            self.skip_next = True
+            return
+        self.tokens.append(token)
 
 
 class CommandFull:

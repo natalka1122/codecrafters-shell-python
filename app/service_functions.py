@@ -36,7 +36,7 @@ def completer(text: str, state: int) -> str | None:  # noqa: WPS210
         if len(matches) == 1:
             return f"{result} "
         else:
-            return str(result)
+            return result
     return None
 
 
